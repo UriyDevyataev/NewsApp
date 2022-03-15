@@ -7,9 +7,18 @@
 
 import Foundation
 
-struct News: Codable{
-    let text: String
-    let image: Double
-
+struct MainModel: Codable {
+    var status: String
+    var totalResults: Int?
+    var articles: [News]
 }
 
+struct News: Codable{
+    let author: String?
+    let title: String
+    let description: String?
+    let url: String
+    let urlToImage: String?
+    let publishedAt: String
+    let content: String?
+}
