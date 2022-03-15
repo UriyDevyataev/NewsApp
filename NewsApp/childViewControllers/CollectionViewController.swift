@@ -10,13 +10,37 @@ import SnapKit
 
 class CollectionViewController: UIViewController {
     
+    let dataService = DataServiceImp()
+    
     private var collectionView : UICollectionView?
-    var data: News?
+    var news = [News]()
+    var category: String? = nil
+    var imageArray = [UIImage]()
+    
 //    var sizeView = CGSize.zero
         
     override func viewDidLoad() {
         super.viewDidLoad()
         config()
+        getDate()
+    }
+    
+    func getDate() {
+        
+        guard let category = category else {return}
+        
+        dataService.receiveData(category: category) {[weak self] news in
+            guard let self = self else {return}
+            self.news = news.sorted{
+                $0.publishedAt.dateFromUTC() < $1.publishedAt.dateFromUTC()
+            }
+            
+            DispatchQueue.main.async {
+                self.collectionView?.reloadData()
+            }
+        } error: { error in
+            print(error)
+        }
     }
     
     deinit {
@@ -37,6 +61,7 @@ class CollectionViewController: UIViewController {
     private func configCollectionView(){
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
+        layout.minimumLineSpacing = 0
         let collectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: layout)
         
         collectionView.delegate = self
@@ -45,9 +70,7 @@ class CollectionViewController: UIViewController {
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.backgroundColor = .clear
         
-        collectionView.register(
-            UINib(nibName: "HourCollectionViewCell", bundle: nil),
-            forCellWithReuseIdentifier: "HourCollectionViewCellIdent")
+        collectionView.register(NewsCollectionViewCell.nib(), forCellWithReuseIdentifier: "NewsCollectionViewCell")
         
         view.addSubview(collectionView)
         collectionView.snp.makeConstraints { make in
@@ -57,12 +80,40 @@ class CollectionViewController: UIViewController {
         self.collectionView = collectionView
     }
 
-    private func fill(cell: NewsCollectionViewCell, withContent: News, index: Int) -> UICollectionViewCell {
+    private func fill(cell: NewsCollectionViewCell, withContent: News, indexPath: IndexPath) -> UICollectionViewCell {
         
-        cell.imageNews.image = nil
-        cell.textNews.text = ""
+        cell.indexPath = indexPath
+        cell.textNews.text = withContent.title
+        
+        dataService.loadImage(url: withContent.urlToImage) { image in
+            guard let image = image else {return}
+            
+            
+            if cell.indexPath == indexPath {
+                DispatchQueue.main.async {
+                    cell.imageNews.image = image
+                    
+//                    cell.textNews.text = withContent.title
+                }
+            }
+        
+        } error: { error in
+            print(error as Any)
+        }
 
         return cell
+    }
+    
+    private func prepareWebViewController(startLink: String?) -> WebViewController? {
+        guard let link = startLink else {return nil}
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        if let controller  = storyboard.instantiateViewController(identifier: "WebViewControllerIdent") as? WebViewController {
+            controller.modalPresentationStyle = .formSheet
+            controller.url = URL(string: link)
+            return controller
+        } else {
+            return nil
+        }
     }
 }
 
@@ -70,7 +121,7 @@ extension CollectionViewController: UICollectionViewDataSource, UICollectionView
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
 
-        return 10
+        return news.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -81,11 +132,17 @@ extension CollectionViewController: UICollectionViewDataSource, UICollectionView
                     for: indexPath) as? NewsCollectionViewCell
         else {return UICollectionViewCell()}
         
-        guard let data = data else {return newsCell}
-        
-        let cell = fill(cell: newsCell, withContent: data, index: indexPath.row)
+        let new = news[indexPath.row]
+                
+        let cell = fill(cell: newsCell, withContent: new, indexPath: indexPath)
 
         return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let url = news[indexPath.row].url
+        guard let controller = prepareWebViewController(startLink: url) else {return}
+        self.present(controller, animated: true)
     }
 }
 
@@ -93,11 +150,11 @@ extension CollectionViewController: UICollectionViewDelegateFlowLayout{
 
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         
-//        let width = sizeView.width / 6
-//        let height = sizeView.height
+
         
-        let width = 100
-        let height = 100
-        return CGSize(width: width, height: height)
+        let width: CGFloat = collectionView.frame.size.width / 2.5
+        let height: CGFloat = collectionView.frame.size.height
+        let size = CGSize(width: width, height: height)
+        return size
     }
 }
