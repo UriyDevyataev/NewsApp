@@ -8,6 +8,12 @@
 import UIKit
 
 class ViewController: UIViewController {
+    
+    @IBAction func act(_ sender: Any) {
+        
+    }
+    
+    var categories = ["technology", "sports", "science", "health", "general", "entertainment", "business"]
 
     @IBOutlet weak var tableView: UITableView!
     
@@ -18,11 +24,17 @@ class ViewController: UIViewController {
     
     func config() {
         configTableView()
+        sortArray()
+    }
+    
+    func sortArray() {
+        categories = categories.sorted{$0 < $1}
     }
     
     func configTableView() {
         
         tableView.backgroundColor = .clear
+        tableView.separatorStyle = .none
         
         tableView.delegate = self
         tableView.dataSource = self
@@ -34,6 +46,7 @@ class ViewController: UIViewController {
     func fill(cell: CategoryTableViewCell, indexPath: IndexPath) -> CategoryTableViewCell {
         
         let controller = CollectionViewController()
+        controller.category = categories[indexPath.section]
         addChildViewController(container: cell.contentView, controller: controller)
         return cell
     }
@@ -58,7 +71,7 @@ class ViewController: UIViewController {
 extension ViewController: UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return 4
+        return categories.count
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -73,9 +86,22 @@ extension ViewController: UITableViewDataSource {
         let cell = fill(cell: contentCell, indexPath: indexPath)
         return cell
     }
+    
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        return categories[section].uppercased()
+    }
+
+
+//    func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+//
+//    }
 }
 
 extension ViewController: UITableViewDelegate {
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return tableView.frame.height / 3
+    }
     
 }
 
