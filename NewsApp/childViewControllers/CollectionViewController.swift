@@ -10,6 +10,8 @@ import SnapKit
 
 class CollectionViewController: UIViewController {
     
+    let imageCache = NSCache<NSString, UIImage>()
+    
     let dataService = DataServiceImp()
     
     private var collectionView : UICollectionView?
@@ -23,6 +25,16 @@ class CollectionViewController: UIViewController {
         super.viewDidLoad()
         config()
         getDate()
+    }
+    
+    private func config(){
+        view.backgroundColor = .clear
+        configCollectionView()
+        configCash()
+    }
+    
+    func configCash() {
+        imageCache.countLimit = 100
     }
     
     func getDate() {
@@ -47,10 +59,7 @@ class CollectionViewController: UIViewController {
 //        print("deinit HourlyViewController")
     }
     
-    private func config(){
-        view.backgroundColor = .clear
-        configCollectionView()
-    }
+    
     
 //    func update(withData: WeatherResponse?) {
 //        guard let data = withData else {return}
@@ -85,22 +94,29 @@ class CollectionViewController: UIViewController {
         cell.indexPath = indexPath
         cell.textNews.text = withContent.title
         
-        dataService.loadImage(url: withContent.urlToImage) { image in
-            guard let image = image else {return}
-            
-            
-            if cell.indexPath == indexPath {
-                DispatchQueue.main.async {
-                    cell.imageNews.image = image
-                    
-//                    cell.textNews.text = withContent.title
-                }
-            }
+        let key = NSString(string: withContent.urlToImage ?? "")
         
-        } error: { error in
-            print(error as Any)
+        if let cachedImage = imageCache.object(forKey: key) {
+            cell.imageNews.image = cachedImage
+            
+        } else {
+            guard let urlToImage = withContent.urlToImage else {
+                return cell
+            }
+            
+            dataService.loadImage(url: urlToImage) { [weak self] image in
+                guard let self = self else {return}
+                
+                self.imageCache.setObject(image, forKey: key)
+                if cell.indexPath == indexPath {
+                    DispatchQueue.main.async {
+                        cell.imageNews.image = image
+                    }
+                }
+            } error: { error in
+                print(error as Any)
+            }
         }
-
         return cell
     }
     

@@ -24,7 +24,7 @@ protocol DataService {
 //    var imageDict: [String: UIImage] {get}
     
     func receiveData(category: String, success: @escaping ([News]) -> Void, error: @escaping (Error?) -> Void)
-    func loadImage(url: String?, success: @escaping (UIImage?) -> Void, error: @escaping (Error?) -> Void)
+    func loadImage(url: String, success: @escaping (UIImage) -> Void, error: @escaping (Error?) -> Void)
 }
 
 class DataServiceImp: DataService {
@@ -58,25 +58,20 @@ class DataServiceImp: DataService {
         return components?.url
     }
     
-    func loadImage(url: String?, success: @escaping (UIImage?) -> Void, error: @escaping (Error?) -> Void) {
-        let session = URLSession.shared
-        guard let urlStr = url else {
-            success(nil)
-            return}
-        guard let url = URL.init(string: urlStr) else { return}
+    func loadImage(url: String, success: @escaping (UIImage) -> Void, error: @escaping (Error?) -> Void) {
+        guard let url = URL.init(string: url) else { return}
         let request: URLRequest = URLRequest(url: url)
         
-        let task = session.dataTask(with: request) { data, response, err in
+        let task = URLSession.shared.dataTask(with: request) { data, response, err in
             guard let data = data, err == nil else {
                 error(err)
                 return}
             do {
                 if let image = UIImage(data: data) {
-//                    self.imageDict[imageKey] = uiImage
                     success(image)
                 }
                 else {
-                    success(nil)
+                    error(nil)
                 }
             }
         }

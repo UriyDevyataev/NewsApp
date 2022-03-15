@@ -9,10 +9,6 @@ import UIKit
 
 class ViewController: UIViewController {
     
-    @IBAction func act(_ sender: Any) {
-        
-    }
-    
     var categories = ["technology", "sports", "science", "health", "general", "entertainment", "business"]
 
     @IBOutlet weak var tableView: UITableView!

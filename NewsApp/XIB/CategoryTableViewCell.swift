@@ -11,7 +11,7 @@ class CategoryTableViewCell: UITableViewCell {
     
     static let identifier = "CategoryTableViewCell"
     
-    var indexPath: IndexPath?
+//    var indexPath: IndexPath?
     
     static func nib() -> UINib {
         return UINib(nibName: "CategoryTableViewCell",
@@ -23,8 +23,13 @@ class CategoryTableViewCell: UITableViewCell {
         // Initialization code
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        prepare()
+    }
+    
     func prepare() {
-        indexPath = nil
+//        indexPath = nil
     }
 
     override func setSelected(_ selected: Bool, animated: Bool) {
